@@ -86,6 +86,7 @@ widget's settings.
 ```sh
 omarchy-shell videinfra.omaprox toggle
 omarchy-shell videinfra.omaprox refresh
+omarchy-shell videinfra.omaprox version   # the plugin version, from manifest.json
 omarchy-shell videinfra.omaprox page keys   # guests, keys or settings
 omarchy-shell videinfra.omaprox running    # "3/7"
 omarchy-shell videinfra.omaprox status     # "Connected" or the current error

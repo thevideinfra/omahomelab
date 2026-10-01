@@ -105,6 +105,12 @@ Item {
             compare(e[0], "omarchy-launch-browser")
             verify(e[1].indexOf("https://pve.lan:8006/?console=kvm&novnc=1&vmid=100") === 0, e[1])
 
+            // --- the header's GitHub link opens the repository in the browser
+            Quickshell.execs = []
+            panel.openRepo()
+            compare(lastExec(), ["omarchy-launch-browser", "https://github.com/thevideinfra/omaprox"])
+            compare(panel.repoUrl, "https://github.com/thevideinfra/omaprox")
+
             // --- web UI + setup helpers
             panel.handleKey("o")
             compare(lastExec()[1], "https://pve.lan:8006/")
@@ -150,6 +156,18 @@ Item {
             // storage section is on unless switched off
             compare(panel.showStorage, true)
             compare(compactPanel.showStorage, false)
+
+            // header: the name, the host under it (a link), and the counts live on the section labels
+            compare(panel.title, "omaprox")
+            compare(panel.statusLine, "pve.lan")
+            compare(panel.statusIsLink, true)
+            compare(panel.guestsTag, "3/4 RUNNING")
+            verify(/^[0-9]+\/[0-9]+ ONLINE$/.test(panel.nodesTag), "nodes tag: " + panel.nodesTag)
+            // an action in progress replaces the host, and is not a link
+            panel.setRowCursor(0)
+            panel.runOp("reboot")
+            verify(panel.statusLine !== "pve.lan", "the action's message replaces the host: " + panel.statusLine)
+            compare(panel.statusIsLink, false)
 
             // the title and node names link to the web UI; the hint names where
             compare(panel.webUiHint, "Open pve.lan:8006 in the browser")

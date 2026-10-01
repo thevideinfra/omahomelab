@@ -43,6 +43,7 @@ Panel {
     readonly property real pagesMaxHeight: sp(500)
 
     property string version: ""
+    readonly property string repoUrl: "https://github.com/thevideinfra/omaprox"
 
     // How far the page is scrolled, and whether it needs to be.
     readonly property real pageScroll: panelFlick.contentY
@@ -115,15 +116,23 @@ Panel {
         return "Proxmox — " + svc.summary.running + " of " + svc.summary.total + " guests running"
     }
 
-    // Header status line: what just happened, else the state of the connection.
+    readonly property string title: "omaprox"
+
+    // Header line under the name: what just happened, else a problem, else the host
+    // (a link to the web UI). The counts live on the section labels below.
     readonly property string statusLine: {
         if (svc.actionStatus !== "") return svc.actionStatus
         if (!svc.installed) return "curl and jq required"
         if (!svc.configured) return svc.statusText
         if (svc.lastError !== "") return "Unreachable"
-        return svc.parts.host + " · " + svc.summary.running + "/" + svc.summary.total
-            + " running · " + svc.summary.nodesOnline + "/" + svc.summary.nodesTotal + " nodes"
+        return svc.parts.host
     }
+    readonly property bool statusIsLink: healthy && svc.actionStatus === "" && svc.parts.host !== ""
+
+    readonly property string nodesTag: svc.summary.nodesOnline + "/" + svc.summary.nodesTotal + " ONLINE"
+    readonly property string guestsTag: svc.nameFilter !== ""
+        ? "FILTER: " + svc.nameFilter.toUpperCase()
+        : svc.summary.running + "/" + svc.summary.total + " RUNNING"
 
     // Tooltip for the title and node names, which open the Proxmox web UI.
     readonly property string webUiHint: svc.parts.host !== ""
@@ -141,6 +150,10 @@ Panel {
 
     function setSetting(key, value) {
         Quickshell.execDetached(["omarchy", "bar", "set", "videinfra.omaprox", key, JSON.stringify(value), "--json"])
+    }
+
+    function openRepo() {
+        Quickshell.execDetached(["omarchy-launch-browser", repoUrl])
     }
 
     // Switch to a tab by id; false for an unknown one.
@@ -504,6 +517,7 @@ Panel {
         function hide(): void { root.close() }
         function toggle(): void { root.toggle() }
         function refresh(): string { svc.refresh(); return "ok" }
+        function version(): string { return root.version }
         function page(id: string): string { return root.showPage(id) ? "ok" : "unknown page" }
         function status(): string { return root.healthy ? "Connected" : (svc.lastError || svc.statusText) }
         function running(): string { return svc.summary.running + "/" + svc.summary.total }
@@ -582,8 +596,8 @@ Panel {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: root.sp(2)
 
-                        // The name on the left; the version and the web UI link on
-                        // the right of the same line, so they stay clear of it.
+                        // The name on the left; the version and the GitHub link on the
+                        // right of the same line, so they stay clear of it.
                         Item {
                             width: parent.width
                             implicitHeight: Math.max(titleText.implicitHeight, versionRow.implicitHeight)
@@ -592,26 +606,11 @@ Panel {
                                 id: titleText
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "Proxmox"
-                                color: titleMouse.containsMouse ? Color.accent : root.barForeground
+                                text: root.title
+                                color: root.barForeground
                                 font.family: Style.font.family
                                 font.pixelSize: root.fontTitle
                                 font.bold: true
-                                font.underline: titleMouse.containsMouse
-
-                                MouseArea {
-                                    id: titleMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: svc.openWebUi()
-                                }
-
-                                PanelToolTip {
-                                    visible: titleMouse.containsMouse
-                                    text: root.webUiHint
-                                    fontFamily: Style.font.family
-                                }
                             }
 
                             Row {
@@ -642,44 +641,64 @@ Panel {
                                     }
                                 }
 
-                                // Opens the Proxmox web UI in the browser.
+                                // Opens this plugin's repository in the browser.
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     textFormat: Text.PlainText
-                                    text: ""
-                                    color: linkMouse.containsMouse ? Color.accent : root.barForeground
-                                    opacity: linkMouse.containsMouse ? 1.0 : 0.6
+                                    text: "\uf09b"
+                                    color: repoMouse.containsMouse ? Color.accent : root.barForeground
+                                    opacity: repoMouse.containsMouse ? 1.0 : 0.6
                                     font.family: Style.font.family
                                     font.pixelSize: root.fontBody
 
                                     MouseArea {
-                                        id: linkMouse
+                                        id: repoMouse
                                         anchors.fill: parent
                                         anchors.margins: -root.sp(4)
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: svc.openWebUi()
+                                        onClicked: root.openRepo()
                                     }
 
                                     PanelToolTip {
-                                        visible: linkMouse.containsMouse
-                                        text: root.webUiHint
+                                        visible: repoMouse.containsMouse
+                                        text: "Open on GitHub"
                                         fontFamily: Style.font.family
                                     }
                                 }
                             }
                         }
 
+                        // The host under the name opens the Proxmox web UI.
                         Text {
+                            id: statusText
                             width: parent.width
                             textFormat: Text.PlainText
                             text: root.statusLine.toUpperCase()
-                            color: Qt.darker(root.barForeground, 1.4)
+                            color: root.statusIsLink && hostMouse.containsMouse ? Color.accent : Qt.darker(root.barForeground, 1.4)
                             font.family: Style.font.family
                             font.pixelSize: root.fontCaption
                             font.bold: true
                             font.letterSpacing: 0.6
+                            font.underline: root.statusIsLink && hostMouse.containsMouse
                             elide: Text.ElideRight
+
+                            MouseArea {
+                                id: hostMouse
+                                enabled: root.statusIsLink
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: Math.min(parent.width, parent.implicitWidth)
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: svc.openWebUi()
+                            }
+
+                            PanelToolTip {
+                                visible: root.statusIsLink && hostMouse.containsMouse
+                                text: root.webUiHint
+                                fontFamily: Style.font.family
+                            }
                         }
                     }
 
@@ -992,7 +1011,7 @@ Panel {
             width: parent.width
             spacing: root.sp(8)
 
-            SectionLabel { icon: ""; text: "NODES" }
+            SectionLabel { icon: ""; text: "NODES"; tag: root.nodesTag }
 
             Repeater {
                 model: svc.nodes
@@ -1014,8 +1033,7 @@ Panel {
             SectionLabel {
                 icon: ""
                 text: "VMS AND CONTAINERS"
-                tag: svc.nameFilter !== "" ? "FILTER: " + svc.nameFilter.toUpperCase()
-                    : root.guestRows.length + (root.guestRows.length === 1 ? " GUEST" : " GUESTS")
+                tag: root.guestsTag
             }
 
             Caption {
