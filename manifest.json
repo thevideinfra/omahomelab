@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "id": "videinfra.omaprox",
+  "name": "omaprox",
+  "version": "0.2.0",
+  "author": "thevideinfra",
+  "license": "MIT",
+  "description": "Proxmox VE status in the Omarchy bar: nodes, VMs and containers, storage, with power actions, snapshots and console launch.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Proxmox",
+    "description": "Monitor and control Proxmox VE guests from the bar.",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "density": "normal",
+      "fontSize": "normal",
+      "host": "",
+      "port": 8006,
+      "refreshIntervalSec": 15,
+      "caCertPath": "",
+      "insecureTls": false,
+      "nameFilter": "",
+      "hideStopped": false,
+      "showTemplates": false,
+      "showCountInBar": true,
+      "showStorage": true,
+      "consoleMode": "browser",
+      "sshUser": "root",
+      "sshDomain": ""
+    },
+    "schema": [
+      {
+        "key": "density",
+        "type": "enum",
+        "label": "Density",
+        "options": [
+          "compact",
+          "normal",
+          "roomy"
+        ],
+        "defaultValue": "normal",
+        "description": "How tightly the panel is laid out."
+      },
+      {
+        "key": "fontSize",
+        "type": "enum",
+        "label": "Font size",
+        "options": [
+          "small",
+          "normal",
+          "large"
+        ],
+        "defaultValue": "normal",
+        "description": "Text size, on top of the density's own scaling."
+      },
+      {
+        "key": "host",
+        "type": "string",
+        "label": "Proxmox host (name or IP)",
+        "defaultValue": ""
+      },
+      {
+        "key": "port",
+        "type": "integer",
+        "label": "API port",
+        "min": 1,
+        "max": 65535,
+        "step": 1,
+        "defaultValue": 8006
+      },
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 5,
+        "max": 600,
+        "step": 5,
+        "defaultValue": 15
+      },
+      {
+        "key": "caCertPath",
+        "type": "string",
+        "label": "CA/server certificate file (blank = ~/.config/omaprox/pve.pem if present)",
+        "defaultValue": ""
+      },
+      {
+        "key": "insecureTls",
+        "type": "boolean",
+        "label": "Skip TLS verification (not recommended)",
+        "defaultValue": false
+      },
+      {
+        "key": "nameFilter",
+        "type": "string",
+        "label": "Only show guests matching (name, id, node, tag)",
+        "defaultValue": ""
+      },
+      {
+        "key": "hideStopped",
+        "type": "boolean",
+        "label": "Hide stopped guests",
+        "defaultValue": false
+      },
+      {
+        "key": "showTemplates",
+        "type": "boolean",
+        "label": "Show templates",
+        "defaultValue": false
+      },
+      {
+        "key": "showStorage",
+        "type": "boolean",
+        "label": "Show the storage section",
+        "defaultValue": true
+      },
+      {
+        "key": "showCountInBar",
+        "type": "boolean",
+        "label": "Show running/total next to the bar icon",
+        "defaultValue": true
+      },
+      {
+        "key": "consoleMode",
+        "type": "enum",
+        "label": "Console opens in",
+        "options": [
+          "browser",
+          "spice",
+          "terminal"
+        ],
+        "defaultValue": "browser",
+        "description": "Browser noVNC, SPICE (remote-viewer), or an ssh session in a terminal."
+      },
+      {
+        "key": "sshUser",
+        "type": "string",
+        "label": "SSH user for the terminal console",
+        "defaultValue": "root"
+      },
+      {
+        "key": "sshDomain",
+        "type": "string",
+        "label": "SSH domain appended to the guest name (e.g. lan)",
+        "defaultValue": ""
+      }
+    ]
+  }
+}
