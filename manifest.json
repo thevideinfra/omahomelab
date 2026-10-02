@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "videinfra.omahomelab",
   "name": "omahomelab",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "thevideinfra",
   "license": "MIT",
   "description": "Proxmox VE status in the Omarchy bar: nodes, VMs and containers, storage, with power actions, snapshots and console launch.",
