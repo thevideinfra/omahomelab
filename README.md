@@ -15,6 +15,14 @@ the keyboard.
   **R**eboot, **F**orce stop (needs a second press), **C**onsole, SPICE (**V**), **P** snapshot, resume (**U**).
 - One API call per refresh (`/cluster/resources`), so it works for a single node or a cluster.
 
+## Screenshots
+
+<p>
+  <img src="assets/panel-guests.png" width="260" alt="Guests tab">
+  <img src="assets/panel-keys.png" width="260" alt="Keys tab">
+  <img src="assets/panel-settings.png" width="260" alt="Settings tab">
+</p>
+
 ## Requirements
 
 - Omarchy 4.0+
