@@ -269,10 +269,17 @@ function powerAction(g) {
     return null
 }
 
-// What the expanded row still offers once the inline button has the power op.
+// The inline Console button on a card, when the guest can open one.
+function consoleAction(g) {
+    return findAction(g, "console")
+}
+
+// What the open card still offers once the inline buttons have the power and console ops.
 function rowActions(g) {
     var power = powerAction(g)
-    return guestActions(g).filter(function(a) { return !power || a.op !== power.op })
+    return guestActions(g).filter(function(a) {
+        return a.op !== "console" && (!power || a.op !== power.op)
+    })
 }
 
 function guestGlyph(type) {
@@ -445,6 +452,7 @@ if (typeof module !== "undefined" && module.exports) {
         validSshUser: validSshUser, validDomain: validDomain, validHost: validHost, validPort: validPort,
         sshUserFor: sshUserFor, setSshUser: setSshUser,
         keyHelp: keyHelp, manifestVersion: manifestVersion,
+        consoleAction: consoleAction,
         guestGlyph: guestGlyph, guestLabel: guestLabel,
         densityScale: densityScale, fontSizeScale: fontSizeScale, settingBool: settingBool,
         ACTIONS: ACTIONS

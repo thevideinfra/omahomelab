@@ -7,9 +7,10 @@ the keyboard.
 - Bar icon with a `running/total` count; dims when the cluster is unreachable.
 - Popup with node CPU/memory, every guest (status, CPU, memory, uptime, tags, locks) and storage usage,
   styled like tandem and omaudiopanel: a header with the version, cards, icon section labels, and Guests, Keys and Settings tabs along the bottom.
-- Every VM and container row has its own power button: start when stopped, graceful shutdown when
-  running. Click a row (or move to it with the arrow keys) to open it and see Reboot, Console, SPICE,
-  Snapshot and Force stop.
+- Every VM and container card has its own buttons: a console button (browser, SPICE or ssh, as chosen
+  in Settings) for guests that are running or paused, and a power button that starts a stopped guest or
+  shuts a running one down. Click a card (or move to it with the arrow keys) to open it and see Reboot,
+  SPICE, Snapshot and Force stop.
 - Actions per guest, offered only when they make sense for its state: **S**tart, shut**D**own,
   **R**eboot, **F**orce stop (needs a second press), **C**onsole, SPICE (**V**), **P** snapshot, resume (**U**).
 - One API call per refresh (`/cluster/resources`), so it works for a single node or a cluster.

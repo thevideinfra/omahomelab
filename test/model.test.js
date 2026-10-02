@@ -173,15 +173,25 @@ test("powerAction is the one-click start or graceful shutdown", () => {
     assert.strictEqual(M.powerAction({ status: "running", lock: "", template: false }).confirm, undefined)
 })
 
-test("rowActions are the valid actions minus the inline power one", () => {
+test("rowActions are the valid actions minus the inline power and console buttons", () => {
     const ops = g => M.rowActions(g).map(a => a.op)
     assert.deepStrictEqual(ops({ status: "running", lock: "", template: false }),
-        ["reboot", "console", "spice", "snapshot", "stop"])
+        ["reboot", "spice", "snapshot", "stop"])
     assert.deepStrictEqual(ops({ status: "stopped", lock: "", template: false }), ["snapshot"])
-    assert.deepStrictEqual(ops({ status: "paused", lock: "", template: false }), ["console", "stop"])
-    // locked guest: console stays, nothing else
-    assert.deepStrictEqual(ops({ status: "running", lock: "backup", template: false }), ["console"])
+    assert.deepStrictEqual(ops({ status: "paused", lock: "", template: false }), ["stop"])
+    // a locked guest only has console, which is the inline button
+    assert.deepStrictEqual(ops({ status: "running", lock: "backup", template: false }), [])
     assert.deepStrictEqual(ops(null), [])
+})
+
+test("consoleAction is the inline Console button, when the guest can open one", () => {
+    const op = g => { const a = M.consoleAction(g); return a ? a.op : "" }
+    assert.strictEqual(op({ status: "running", lock: "", template: false }), "console")
+    assert.strictEqual(op({ status: "paused", lock: "", template: false }), "console")
+    assert.strictEqual(op({ status: "running", lock: "backup", template: false }), "console")
+    assert.strictEqual(op({ status: "stopped", lock: "", template: false }), "")
+    assert.strictEqual(op({ status: "running", lock: "", template: true }), "")
+    assert.strictEqual(op(null), "")
 })
 
 test("guestGlyph tells VMs from containers", () => {

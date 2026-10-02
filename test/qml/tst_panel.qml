@@ -246,7 +246,7 @@ Item {
             panel.setRowCursor(0)
             compare(panel.selectedGuest.vmid, 100)
             compare(panel.selectedRowActions.map(function(a) { return a.op }),
-                    ["reboot", "console", "spice", "snapshot", "stop"])
+                    ["reboot", "spice", "snapshot", "stop"])
             panel.setRowCursor(3)
             compare(panel.selectedRowActions.map(function(a) { return a.op }), ["snapshot"])
         }
@@ -660,6 +660,37 @@ Item {
             compare(panel.pageScroll, 0)
             compare(panel.moreBelow, panel.pageOverflows)
             panel.showPage("guests")
+        }
+
+        function test_inline_console_button() {
+            wait(300)
+            panel.showPage("guests")
+            var web = panel.guestRows[0]
+            var db = panel.guestRows[3]
+            var locked = panel.guestRows[2]
+            compare(web.name, "web")
+            // running and locked-but-running guests can open a console, a stopped one cannot
+            compare(panel.hasConsole(web), true)
+            compare(panel.hasConsole(locked), true)
+            compare(panel.hasConsole(db), false)
+
+            // clicking the button opens the console for that card, in the chosen mode
+            Quickshell.execs = []
+            panel.openConsole(web)
+            compare(lastExec()[0], "omarchy-launch-browser")
+            compare(panel.selectedGuest.vmid, web.vmid, "it also selects the card")
+            Quickshell.execs = []
+            sshPanel.openConsole(sshPanel.guestRows[0])
+            compare(lastExec(), ["omarchy-launch-terminal", "ssh", "ks@web.lan"])
+
+            // a guest with no console does nothing
+            Quickshell.execs = []
+            panel.openConsole(db)
+            compare(Quickshell.execs.length, 0)
+
+            // the tooltip says what the click will do
+            verify(panel.consoleTip(web).toLowerCase().indexOf("browser") !== -1, panel.consoleTip(web))
+            verify(sshPanel.consoleTip(sshPanel.guestRows[0]).indexOf("ks@web.lan") !== -1, sshPanel.consoleTip(sshPanel.guestRows[0]))
         }
     }
 }

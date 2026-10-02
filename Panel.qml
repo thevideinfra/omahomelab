@@ -417,16 +417,42 @@ Panel {
         return a ? a.op : ""
     }
 
-    function powerToggle(guest) {
-        var op = powerOpFor(guest)
-        if (op === "") return
+    // Move the cursor to a guest's card, as a click on one of its buttons does.
+    function selectGuest(guest) {
         for (var i = 0; i < guestRows.length; i++) {
             if (guestRows[i].vmid === guest.vmid) {
                 setRowCursor(i)
-                break
+                return
             }
         }
+    }
+
+    function powerToggle(guest) {
+        var op = powerOpFor(guest)
+        if (op === "") return
+        selectGuest(guest)
         runOp(op)
+    }
+
+    // The inline Console button: whether the guest has one, what clicking does, and doing it.
+    function hasConsole(guest) {
+        return Model.consoleAction(guest) !== null
+    }
+
+    function consoleTip(guest) {
+        if (!guest) return ""
+        if (consoleMode === "spice") return "Open the SPICE console for " + guest.name
+        if (consoleMode === "terminal") {
+            var target = Model.sshTarget(guest, sshUserOf(guest), svc.sshDomain)
+            return target !== "" ? "Open ssh " + target + " in a terminal" : "Cannot ssh to " + guest.name
+        }
+        return "Open the console for " + guest.name + " in the browser"
+    }
+
+    function openConsole(guest) {
+        if (!guest || !hasConsole(guest)) return
+        selectGuest(guest)
+        runOp("console")
     }
 
     function handleKey(t) {
@@ -591,8 +617,7 @@ Panel {
                         id: headerLabels
                         anchors.left: headerIcon.right
                         anchors.leftMargin: root.sp(12)
-                        anchors.right: closeButton.left
-                        anchors.rightMargin: root.sp(8)
+                        anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: root.sp(2)
 
@@ -699,39 +724,6 @@ Panel {
                                 text: root.webUiHint
                                 fontFamily: Style.font.family
                             }
-                        }
-                    }
-
-                    Rectangle {
-                        id: closeButton
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: root.sp(26)
-                        height: root.sp(26)
-                        radius: root.sp(6)
-                        color: closeMouse.containsMouse ? root.tint(0.12) : "transparent"
-
-                        Text {
-                            anchors.centerIn: parent
-                            textFormat: Text.PlainText
-                            text: ""
-                            color: root.barForeground
-                            font.family: Style.font.family
-                            font.pixelSize: root.fontBody
-                        }
-
-                        MouseArea {
-                            id: closeMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.close()
-                        }
-
-                        PanelToolTip {
-                            visible: closeMouse.containsMouse
-                            text: "Close"
-                            fontFamily: Style.font.family
                         }
                     }
                 }
@@ -1574,44 +1566,23 @@ Panel {
                     }
                 }
 
+                // Console, in the chosen mode: the browser, SPICE or an ssh session.
+                IconButton {
+                    visible: root.hasConsole(guestCard.guest)
+                    glyph: "\uf120"
+                    tip: root.consoleTip(guestCard.guest)
+                    onClicked: root.openConsole(guestCard.guest)
+                }
+
                 // Inline power: start when stopped, graceful shutdown when
                 // running. Force stop stays behind the confirm in the open card.
-                Rectangle {
-                    id: powerButton
+                IconButton {
                     visible: guestCard.powerOp !== ""
-                    Layout.preferredWidth: root.sp(28)
-                    Layout.preferredHeight: root.sp(28)
-                    Layout.alignment: Qt.AlignVCenter
-                    radius: root.sp(6)
-                    color: powerMouse.containsMouse && !svc.actionBusy ? Util.alpha(Color.accent, 0.18) : root.tint(0.08)
-                    border.width: 1
-                    border.color: powerMouse.containsMouse && !svc.actionBusy ? Color.accent : root.tint(0.22)
-                    opacity: svc.actionBusy ? 0.4 : 1.0
-
-                    Text {
-                        anchors.centerIn: parent
-                        textFormat: Text.PlainText
-                        text: guestCard.powerOp === "shutdown" ? "󰐥" : "󰐊"
-                        color: powerMouse.containsMouse && !svc.actionBusy ? Color.accent : root.barForeground
-                        font.family: Style.font.family
-                        font.pixelSize: root.fontBody
-                    }
-
-                    MouseArea {
-                        id: powerMouse
-                        anchors.fill: parent
-                        enabled: !svc.actionBusy
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.powerToggle(guestCard.guest)
-                    }
-
-                    PanelToolTip {
-                        visible: powerMouse.containsMouse
-                        text: guestCard.powerOp === "shutdown" ? "Shut down " + guestCard.guest.name
-                            : (guestCard.powerOp === "resume" ? "Resume " + guestCard.guest.name : "Start " + guestCard.guest.name)
-                        fontFamily: Style.font.family
-                    }
+                    glyph: guestCard.powerOp === "shutdown" ? "󰐥" : "󰐊"
+                    active: !svc.actionBusy
+                    tip: guestCard.powerOp === "shutdown" ? "Shut down " + guestCard.guest.name
+                        : (guestCard.powerOp === "resume" ? "Resume " + guestCard.guest.name : "Start " + guestCard.guest.name)
+                    onClicked: root.powerToggle(guestCard.guest)
                 }
             }
 
@@ -1766,6 +1737,48 @@ Panel {
         textFormat: Text.PlainText
         font.family: Style.font.family
         font.pixelSize: root.fontCaption
+    }
+
+    // A small square button with a glyph, for the buttons on a card.
+    component IconButton: Rectangle {
+        id: iconButton
+        property string glyph: ""
+        property string tip: ""
+        property bool active: true
+        signal clicked()
+
+        Layout.preferredWidth: root.sp(28)
+        Layout.preferredHeight: root.sp(28)
+        Layout.alignment: Qt.AlignVCenter
+        radius: root.sp(6)
+        color: iconMouse.containsMouse && active ? Util.alpha(Color.accent, 0.18) : root.tint(0.08)
+        border.width: 1
+        border.color: iconMouse.containsMouse && active ? Color.accent : root.tint(0.22)
+        opacity: active ? 1.0 : 0.4
+
+        Text {
+            anchors.centerIn: parent
+            textFormat: Text.PlainText
+            text: iconButton.glyph
+            color: iconMouse.containsMouse && iconButton.active ? Color.accent : root.barForeground
+            font.family: Style.font.family
+            font.pixelSize: root.fontBody
+        }
+
+        MouseArea {
+            id: iconMouse
+            anchors.fill: parent
+            enabled: iconButton.active
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: iconButton.clicked()
+        }
+
+        PanelToolTip {
+            visible: iconMouse.containsMouse
+            text: iconButton.tip
+            fontFamily: Style.font.family
+        }
     }
 
     // A small outlined button. strong fills it with the accent; danger turns it
