@@ -1,6 +1,6 @@
-# Proxmox for Omarchy
+# omahomelab
 
-A bar widget for Omarchy 4 (Quattro) that shows your Proxmox VE nodes, VMs, containers and
+A homelab bar widget for Omarchy 4 (Quattro), for Proxmox VE. It shows your nodes, VMs, containers and
 storage, and lets you start, shut down, reboot, snapshot, and open consoles without leaving
 the keyboard.
 
