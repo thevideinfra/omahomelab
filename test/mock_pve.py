@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tiny fake Proxmox VE API for testing omaprox. Not a faithful PVE, just the
+"""Tiny fake Proxmox VE API for testing omahomelab. Not a faithful PVE, just the
 endpoints the plugin touches, with the same auth header and response shapes.
 
 usage: mock_pve.py --port N [--cert C --key K] [--log FILE] [--delay SECS]
@@ -96,7 +96,7 @@ def make_handler(log_path, delay):
 
             m = SNAP_RE.match(self.path)
             if self.command == "POST" and m:
-                if "snapname=omaprox-" not in body:
+                if "snapname=omahomelab-" not in body:
                     return self._reply(400, {"data": None}, "snapname missing")
                 return self._reply(200, {"data": "UPID:%s:snapshot" % m.group(1)})
 

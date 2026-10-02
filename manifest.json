@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "videinfra.omaprox",
-  "name": "omaprox",
+  "id": "videinfra.omahomelab",
+  "name": "omahomelab",
   "version": "0.3.0",
   "author": "thevideinfra",
   "license": "MIT",
@@ -88,7 +88,7 @@
       {
         "key": "caCertPath",
         "type": "string",
-        "label": "CA/server certificate file (blank = ~/.config/omaprox/pve.pem if present)",
+        "label": "CA/server certificate file (blank = ~/.config/omahomelab/pve.pem if present)",
         "defaultValue": ""
       },
       {

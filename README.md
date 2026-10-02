@@ -32,11 +32,11 @@ the keyboard.
 ## Install
 
 ```sh
-omarchy plugin add https://github.com/thevideinfra/omaprox.git --enable
+omarchy plugin add https://github.com/thevideinfra/omahomelab.git --enable
 ```
 
-For a local checkout, link it into `~/.config/omarchy/plugins/videinfra.omaprox` (the folder name must
-match the plugin id) and run `omarchy plugin enable videinfra.omaprox --section right`. Restart the
+For a local checkout, link it into `~/.config/omarchy/plugins/videinfra.omahomelab` (the folder name must
+match the plugin id) and run `omarchy plugin enable videinfra.omahomelab --section right`. Restart the
 shell after QML edits, since linked plugins do not hot reload.
 
 ## First run
@@ -44,7 +44,7 @@ shell after QML edits, since linked plugins do not hot reload.
 1. Open the panel, go to the **Settings** tab and type your **Host** (name or IP; the port defaults to
    8006) under Connection, then press **Apply**.
 2. Click the bar icon and choose **Set up token and certificate** (or press `T`). A terminal opens,
-   asks for your API token (input hidden), saves it to `~/.config/omaprox/token` with mode 600,
+   asks for your API token (input hidden), saves it to `~/.config/omahomelab/token` with mode 600,
    offers to pin the server certificate, and tests the connection.
 
 Create the token in Proxmox under *Datacenter → Permissions → API Tokens*, then grant a role:
@@ -72,7 +72,7 @@ Bar: left click opens the panel, right click refreshes, middle click opens the P
 | Proxmox host | *(blank)* | Name or IP. `host:port`, `https://host:port/` and `[v6]:port` also work. |
 | API port | 8006 | |
 | Refresh interval | 15 s | 5–600. Actions trigger extra refreshes after 1.5 s and 5 s. |
-| CA/server certificate file | *(blank)* | Blank uses `~/.config/omaprox/pve.pem` if setup pinned one, else system trust. |
+| CA/server certificate file | *(blank)* | Blank uses `~/.config/omahomelab/pve.pem` if setup pinned one, else system trust. |
 | Skip TLS verification | off | Escape hatch for lab setups. Not recommended. |
 | Only show guests matching | *(blank)* | Substring of name, id, node or tag. |
 | Hide stopped guests / Show templates | off / off | |
@@ -94,20 +94,20 @@ widget's settings.
 ## Scripting (IPC)
 
 ```sh
-omarchy-shell videinfra.omaprox toggle
-omarchy-shell videinfra.omaprox refresh
-omarchy-shell videinfra.omaprox version   # the plugin version, from manifest.json
-omarchy-shell videinfra.omaprox page keys   # guests, keys or settings
-omarchy-shell videinfra.omaprox running    # "3/7"
-omarchy-shell videinfra.omaprox status     # "Connected" or the current error
-omarchy-shell videinfra.omaprox guests     # JSON
+omarchy-shell videinfra.omahomelab toggle
+omarchy-shell videinfra.omahomelab refresh
+omarchy-shell videinfra.omahomelab version   # the plugin version, from manifest.json
+omarchy-shell videinfra.omahomelab page keys   # guests, keys or settings
+omarchy-shell videinfra.omahomelab running    # "3/7"
+omarchy-shell videinfra.omahomelab status     # "Connected" or the current error
+omarchy-shell videinfra.omahomelab guests     # JSON
 ```
 
 ## Security model
 
 Omarchy plugins run unsandboxed, so read the code: it is small.
 
-- The token lives in `~/.config/omaprox/token` (or `$OMAPROX_TOKEN`), never in `shell.json`, so
+- The token lives in `~/.config/omahomelab/token` (or `$OMAHOMELAB_TOKEN`), never in `shell.json`, so
   dotfile repos that track `shell.json` do not leak it. A group/world-readable token file is flagged in the panel.
 - The token is passed to `curl` as a header over stdin (`-H @-`), not on the command line, so it is
   not visible in `ps`. `test/run.sh` checks this while a request is in flight.
@@ -116,7 +116,7 @@ Omarchy plugins run unsandboxed, so read the code: it is small.
   certificate, so re-run setup when Proxmox renews it.
 - Host, node, guest type and VM id are validated before they reach a URL.
 - Destructive actions are limited to force stop (confirmed) and nothing deletes or rolls back.
-  Snapshots are created as `omaprox-YYYYmmdd-HHMMSS`; rollback and delete are deliberately left out.
+  Snapshots are created as `omahomelab-YYYYmmdd-HHMMSS`; rollback and delete are deliberately left out.
 - The SPICE connection file holds a one-time ticket, so it is created mode 600 and Proxmox marks it
   for deletion after `remote-viewer` reads it.
 

@@ -7,7 +7,7 @@ import qs.Commons
 import qs.Ui
 import "Model.js" as Model
 
-// Bar widget and panel for videinfra.omaprox, styled after tandem and
+// Bar widget and panel for videinfra.omahomelab, styled after tandem and
 // omaudiopanel: a header with the version and a close button, section labels
 // with icons, rounded cards, boxed choices, and tabs along the bottom (Guests,
 // Keys, Settings). All Proxmox traffic goes through status.sh and action.sh
@@ -15,8 +15,8 @@ import "Model.js" as Model
 Panel {
     id: root
 
-    moduleName: "videinfra.omaprox"
-    ipcTarget: "videinfra.omaprox"
+    moduleName: "videinfra.omahomelab"
+    ipcTarget: "videinfra.omahomelab"
     manageIpc: false
 
     // ---- display settings (shell.json, set from the Settings tab) ---------
@@ -49,7 +49,7 @@ Panel {
     readonly property real panelPadding: Math.max(4, Math.round(Style.spacing.popupPadding * densityScale * 0.8))
 
     property string version: ""
-    readonly property string repoUrl: "https://github.com/thevideinfra/omaprox"
+    readonly property string repoUrl: "https://github.com/thevideinfra/omahomelab"
 
     // How far the page is scrolled, and whether it needs to be.
     readonly property real pageScroll: panelFlick.contentY
@@ -121,7 +121,7 @@ Panel {
         return "Proxmox — " + svc.summary.running + " of " + svc.summary.total + " guests running"
     }
 
-    readonly property string title: "omaprox"
+    readonly property string title: "omahomelab"
 
     // Header line under the name: what just happened, else a problem, else the host
     // (a link to the web UI). The counts live on the section labels below.
@@ -154,7 +154,7 @@ Panel {
     }
 
     function setSetting(key, value) {
-        Quickshell.execDetached(["omarchy", "bar", "set", "videinfra.omaprox", key, JSON.stringify(value), "--json"])
+        Quickshell.execDetached(["omarchy", "bar", "set", "videinfra.omahomelab", key, JSON.stringify(value), "--json"])
     }
 
     function toggleNodes() {
@@ -250,7 +250,7 @@ Panel {
             return
         }
         var item = applyQueue[0]
-        applier.command = ["omarchy", "bar", "set", "videinfra.omaprox", item.key, JSON.stringify(item.value), "--json"]
+        applier.command = ["omarchy", "bar", "set", "videinfra.omahomelab", item.key, JSON.stringify(item.value), "--json"]
         applier.running = true
     }
 

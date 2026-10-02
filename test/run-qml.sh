@@ -14,7 +14,7 @@ RUNNER="$(command -v qmltestrunner || ls /usr/lib/qt6/bin/qmltestrunner 2>/dev/n
 W="$(mktemp -d)"; trap 'kill $MP 2>/dev/null; rm -rf "$W"' EXIT
 python3 test/mock_pve.py --port 18091 & MP=$!
 sleep 1
-OMAPROX_SCHEME=http OMAPROX_TOKEN='root@pam!omarchy=11111111-2222-3333-4444-555555555555' \
+OMAHOMELAB_SCHEME=http OMAHOMELAB_TOKEN='root@pam!omarchy=11111111-2222-3333-4444-555555555555' \
   bash status.sh --host 127.0.0.1 --port 18091 >"$W/out.json"
 cp -r test/qml/qs test/qml/Quickshell test/qml/tst_panel.qml "$W/"
 ln -s "$ROOT" "$W/plugin"

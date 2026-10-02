@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Interactive first-run helper. The widget opens this in a terminal.
-#   1. stores your Proxmox API token in ~/.config/omaprox/token (mode 600)
-#   2. optionally pins the server certificate to ~/.config/omaprox/pve.pem
+#   1. stores your Proxmox API token in ~/.config/omahomelab/token (mode 600)
+#   2. optionally pins the server certificate to ~/.config/omahomelab/pve.pem
 #   3. tests the connection
 #
 # usage: setup.sh [--host HOST] [--port 8006]

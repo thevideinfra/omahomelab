@@ -18,7 +18,7 @@ check() { # check DESC JQ_FILTER JSON  -> passes when filter is true
 
 TOKEN="root@pam!omarchy=11111111-2222-3333-4444-555555555555"
 export XDG_CONFIG_HOME="$T/cfg"
-mkdir -p "$XDG_CONFIG_HOME/omaprox"
+mkdir -p "$XDG_CONFIG_HOME/omahomelab"
 
 # self-signed cert for the TLS cases
 openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=127.0.0.1" \
@@ -39,20 +39,20 @@ start_mock 18081 --log "$T/http.log"
 start_mock 18443 --cert "$T/cert.pem" --key "$T/key.pem" --log "$T/https.log"
 start_mock 18082 --delay 2
 
-status_http() { OMAPROX_SCHEME=http bash "$ROOT/status.sh" --host 127.0.0.1 --port "${1:-18081}" "${@:2}"; }
+status_http() { OMAHOMELAB_SCHEME=http bash "$ROOT/status.sh" --host 127.0.0.1 --port "${1:-18081}" "${@:2}"; }
 
 echo "== setup states"
-out="$(OMAPROX_SCHEME=http bash "$ROOT/status.sh" --host "" --port 18081)"
+out="$(OMAHOMELAB_SCHEME=http bash "$ROOT/status.sh" --host "" --port 18081)"
 check "no host -> not configured" '.configured == false and (.statusText | test("host"))' "$out"
 out="$(status_http)"
 check "no token -> not configured" '.configured == false and (.statusText | test("token"))' "$out"
-out="$(OMAPROX_TOKEN='garbage' status_http)"
+out="$(OMAHOMELAB_TOKEN='garbage' status_http)"
 check "malformed token rejected" '.configured == false and (.statusText | test("user@realm"))' "$out"
-out="$(OMAPROX_SCHEME=http OMAPROX_TOKEN="$TOKEN" bash "$ROOT/status.sh" --host 'evil.com/@x' --port 18081)"
+out="$(OMAHOMELAB_SCHEME=http OMAHOMELAB_TOKEN="$TOKEN" bash "$ROOT/status.sh" --host 'evil.com/@x' --port 18081)"
 check "hostile host rejected before any request" '.configured == false and (.statusText | test("invalid"))' "$out"
 
 echo "== status over http (token via env)"
-out="$(OMAPROX_TOKEN="$TOKEN" status_http)"
+out="$(OMAHOMELAB_TOKEN="$TOKEN" status_http)"
 check "connected" '.configured and .lastError == "" and .statusText == "Connected"' "$out"
 check "2 nodes, 5 guests" '(.nodes | length) == 2 and (.guests | length) == 5' "$out"
 check "offline node kept, no NaN" '(.nodes[] | select(.name=="pve2") | .status == "offline" and .cpu == 0)' "$out"
@@ -65,17 +65,17 @@ check "auth header reached server" '.configured' "$out"
 grep -q '"auth_ok": true' "$T/http.log" && ok "server saw correct PVEAPIToken header" || bad "server auth" "$(tail -2 "$T/http.log")"
 
 echo "== token file + permissions warning"
-printf '%s\n' "$TOKEN" >"$XDG_CONFIG_HOME/omaprox/token"
-chmod 644 "$XDG_CONFIG_HOME/omaprox/token"
+printf '%s\n' "$TOKEN" >"$XDG_CONFIG_HOME/omahomelab/token"
+chmod 644 "$XDG_CONFIG_HOME/omahomelab/token"
 out="$(status_http)"
 check "token file works" '.configured and .lastError == ""' "$out"
 check "group/world-readable token warned" '.warning | test("chmod 600")' "$out"
-chmod 600 "$XDG_CONFIG_HOME/omaprox/token"
+chmod 600 "$XDG_CONFIG_HOME/omahomelab/token"
 out="$(status_http)"
 check "no warning at mode 600" '.warning == ""' "$out"
 
 echo "== auth / API errors"
-out="$(OMAPROX_TOKEN='root@pam!omarchy=wrong-secret' status_http)"
+out="$(OMAHOMELAB_TOKEN='root@pam!omarchy=wrong-secret' status_http)"
 check "bad secret -> 401 message" '.configured and (.lastError | test("Authentication failed"))' "$out"
 out="$(status_http 18999)"
 check "connection refused message" '.lastError | test("refused")' "$out"
@@ -87,13 +87,13 @@ out="$(bash "$ROOT/status.sh" --host 127.0.0.1 --port 18443 --insecure 1)"
 check "--insecure connects" '.lastError == "" and .configured' "$out"
 out="$(bash "$ROOT/status.sh" --host 127.0.0.1 --port 18443 --ca "$T/cert.pem")"
 check "--ca pinned cert connects" '.lastError == "" and .configured' "$out"
-cp "$T/cert.pem" "$XDG_CONFIG_HOME/omaprox/pve.pem"
+cp "$T/cert.pem" "$XDG_CONFIG_HOME/omahomelab/pve.pem"
 out="$(bash "$ROOT/status.sh" --host 127.0.0.1 --port 18443)"
-check "~/.config/omaprox/pve.pem picked up automatically" '.lastError == "" and .configured' "$out"
-rm -f "$XDG_CONFIG_HOME/omaprox/pve.pem"
+check "~/.config/omahomelab/pve.pem picked up automatically" '.lastError == "" and .configured' "$out"
+rm -f "$XDG_CONFIG_HOME/omahomelab/pve.pem"
 
 echo "== actions"
-act() { OMAPROX_SCHEME=http OMAPROX_TOKEN="$TOKEN" bash "$ROOT/action.sh" --host 127.0.0.1 --port 18081 "$@"; }
+act() { OMAHOMELAB_SCHEME=http OMAHOMELAB_TOKEN="$TOKEN" bash "$ROOT/action.sh" --host 127.0.0.1 --port 18081 "$@"; }
 out="$(act --op shutdown --node pve1 --type qemu --vmid 100)"
 check "shutdown ok" '.ok and (.message | test("shutdown requested"))' "$out"
 grep -q '"path": "/api2/json/nodes/pve1/qemu/100/status/shutdown"' "$T/http.log" && ok "hit the right endpoint" || bad "endpoint" "$(tail -3 "$T/http.log")"
@@ -111,7 +111,7 @@ check "path-traversal node refused" '(.ok | not) and (.message | test("Invalid n
 out="$(act --op start --node pve1 --type qemu --vmid '100/../../x')"
 check "bad vmid refused" '(.ok | not) and (.message | test("Invalid VM id"))' "$out"
 out="$(act --op snapshot --node pve1 --type lxc --vmid 200)"
-check "snapshot ok" '.ok and (.message | test("omaprox-[0-9]{8}-[0-9]{6}"))' "$out"
+check "snapshot ok" '.ok and (.message | test("omahomelab-[0-9]{8}-[0-9]{6}"))' "$out"
 grep -q 'description=Created' "$T/http.log" && ok "snapshot description url-encoded/sent" || bad "snapshot body" "$(tail -2 "$T/http.log")"
 
 echo "== spice"
@@ -130,13 +130,13 @@ for _ in $(seq 1 30); do [ -s "$T/spice-seen.vv" ] && break; sleep 0.1; done
 head -1 "$T/spice-seen.vv" | grep -q '^\[virt-viewer\]$' && ok ".vv starts with [virt-viewer]" || bad ".vv header" "$(head -3 "$T/spice-seen.vv" 2>&1)"
 grep -q '^host=pvespiceproxy:' "$T/spice-seen.vv" && grep -q '^delete-this-file=1$' "$T/spice-seen.vv" && ok ".vv has host + delete-this-file" || bad ".vv fields" "$(cat "$T/spice-seen.vv")"
 grep -q '^ca=-----BEGIN CERTIFICATE-----\\n' "$T/spice-seen.vv" && ok ".vv keeps literal \\n in ca" || bad ".vv ca" "$(grep '^ca=' "$T/spice-seen.vv")"
-mode="$(ls -l "$T"/omaprox-*.vv 2>/dev/null | head -1 | cut -c1-10)"
+mode="$(ls -l "$T"/omahomelab-*.vv 2>/dev/null | head -1 | cut -c1-10)"
 [ -z "$mode" ] || [ "$mode" = "-rw-------" ] && ok ".vv file is private (0600)" || bad ".vv mode" "$mode"
 out="$(PATH="$T/bin:$PATH" act --op spice --node pve1 --type lxc --vmid 200)"
 check "spice error surfaced" '(.ok | not) and (.message | test("no spice port"))' "$out"
 
 echo "== token is not visible in the process list"
-( OMAPROX_SCHEME=http OMAPROX_TOKEN="$TOKEN" bash "$ROOT/status.sh" --host 127.0.0.1 --port 18082 >"$T/slow.out" ) &
+( OMAHOMELAB_SCHEME=http OMAHOMELAB_TOKEN="$TOKEN" bash "$ROOT/status.sh" --host 127.0.0.1 --port 18082 >"$T/slow.out" ) &
 SLOW=$!
 sleep 0.8
 if ps -eo args | grep -F '11111111-2222' | grep -v grep >/dev/null; then
@@ -148,10 +148,10 @@ wait "$SLOW"
 
 echo "== setup.sh (interactive helper, piped input)"
 out="$(printf '%s\ny\n\n' "$TOKEN" | bash "$ROOT/setup.sh" --host 127.0.0.1 --port 18443 2>&1)"
-[ -s "$XDG_CONFIG_HOME/omaprox/token" ] && ok "setup wrote token file" || bad "setup token" "$out"
-[ "$(stat -c %a "$XDG_CONFIG_HOME/omaprox/token")" = "600" ] && ok "token file mode 600" || bad "token mode" "$(stat -c %a "$XDG_CONFIG_HOME/omaprox/token")"
-[ "$(stat -c %a "$XDG_CONFIG_HOME/omaprox")" = "700" ] && ok "config dir mode 700" || bad "dir mode" ""
-[ -s "$XDG_CONFIG_HOME/omaprox/pve.pem" ] && ok "setup pinned the certificate" || bad "setup pin" "$out"
+[ -s "$XDG_CONFIG_HOME/omahomelab/token" ] && ok "setup wrote token file" || bad "setup token" "$out"
+[ "$(stat -c %a "$XDG_CONFIG_HOME/omahomelab/token")" = "600" ] && ok "token file mode 600" || bad "token mode" "$(stat -c %a "$XDG_CONFIG_HOME/omahomelab/token")"
+[ "$(stat -c %a "$XDG_CONFIG_HOME/omahomelab")" = "700" ] && ok "config dir mode 700" || bad "dir mode" ""
+[ -s "$XDG_CONFIG_HOME/omahomelab/pve.pem" ] && ok "setup pinned the certificate" || bad "setup pin" "$out"
 printf '%s' "$out" | grep -q 'OK: 2 node(s), 5 guest(s) visible' && ok "setup connection test passed over pinned TLS" || bad "setup test" "$out"
 printf '%s' "$out" | grep -q '11111111' && bad "setup echoed the secret" "" || ok "setup did not echo the secret"
 out="$(printf 'not-a-token\n\n' | bash "$ROOT/setup.sh" --host 127.0.0.1 --port 18443 2>&1)"

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034  # variables are consumed by the scripts that source this file
-# omaprox shared helpers — sourced by status.sh, action.sh and setup.sh.
+# omahomelab shared helpers — sourced by status.sh, action.sh and setup.sh.
 #
 # Design rules:
-#   * The API token is read from $OMAPROX_TOKEN or ~/.config/omaprox/token. It is
+#   * The API token is read from $OMAHOMELAB_TOKEN or ~/.config/omahomelab/token. It is
 #     never written to shell.json and never placed on a command line: curl gets
 #     it as a header over stdin (-H @-), so it does not show up in `ps`.
 #   * TLS is verified by default. Trust comes from a pinned certificate
-#     (--ca, or ~/.config/omaprox/pve.pem if present) or, only if the user opts
+#     (--ca, or ~/.config/omahomelab/pve.pem if present) or, only if the user opts
 #     in, --insecure.
 #   * Every value that ends up in a URL is validated first.
 
@@ -20,9 +20,9 @@ NODE=""
 TYPE=""
 VMID=""
 # Test hook only. The real Proxmox API is HTTPS-only.
-SCHEME="${OMAPROX_SCHEME:-https}"
+SCHEME="${OMAHOMELAB_SCHEME:-https}"
 
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/omaprox"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/omahomelab"
 TOKEN=""
 TOKEN_WARNING=""
 API_BODY=""
@@ -76,10 +76,10 @@ host_port() {
 }
 
 load_token() {
-  TOKEN="${OMAPROX_TOKEN:-}"
+  TOKEN="${OMAHOMELAB_TOKEN:-}"
   TOKEN_WARNING=""
   if [ -z "$TOKEN" ]; then
-    local f="${OMAPROX_TOKEN_FILE:-$CONFIG_DIR/token}"
+    local f="${OMAHOMELAB_TOKEN_FILE:-$CONFIG_DIR/token}"
     if [ -r "$f" ]; then
       TOKEN="$(head -n1 "$f" | tr -d '\r\n ')"
       local mode
@@ -114,7 +114,7 @@ api() {
   local out rc
   : >"$TMPD/hdr"
   out="$(printf 'Authorization: PVEAPIToken=%s\n' "$TOKEN" |
-    curl -sS --max-time "${OMAPROX_TIMEOUT:-10}" -X "$method" -H @- \
+    curl -sS --max-time "${OMAHOMELAB_TIMEOUT:-10}" -X "$method" -H @- \
       -D "$TMPD/hdr" "${tls[@]}" "$@" -w '\n%{http_code}' "$url" 2>"$TMPD/err")"
   rc=$?
 

@@ -109,8 +109,8 @@ Item {
             // --- the header's GitHub link opens the repository in the browser
             Quickshell.execs = []
             panel.openRepo()
-            compare(lastExec(), ["omarchy-launch-browser", "https://github.com/thevideinfra/omaprox"])
-            compare(panel.repoUrl, "https://github.com/thevideinfra/omaprox")
+            compare(lastExec(), ["omarchy-launch-browser", "https://github.com/thevideinfra/omahomelab"])
+            compare(panel.repoUrl, "https://github.com/thevideinfra/omahomelab")
 
             // --- web UI + setup helpers
             panel.handleKey("o")
@@ -168,7 +168,7 @@ Item {
             compare(collapsedPanel.nodesCollapsed, true)
             Quickshell.execs = []
             panel.toggleNodes()
-            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omaprox", "nodesCollapsed", "true", "--json"])
+            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omahomelab", "nodesCollapsed", "true", "--json"])
             collapsedPanel.toggleNodes()
             compare(lastExec()[5], "false")
 
@@ -177,7 +177,7 @@ Item {
             compare(compactPanel.showStorage, false)
 
             // header: the name, the host under it (a link), and the counts live on the section labels
-            compare(panel.title, "omaprox")
+            compare(panel.title, "omahomelab")
             tryCompare(panel, "statusLine", "pve.lan", 6000)   // an earlier test's action message may still be showing
             compare(panel.statusIsLink, true)
             compare(panel.guestsTag, "3/4 RUNNING")
@@ -201,7 +201,7 @@ Item {
             // choices save through omarchy bar set, as JSON
             Quickshell.execs = []
             panel.setSetting("density", "compact")
-            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omaprox", "density", "\"compact\"", "--json"])
+            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omahomelab", "density", "\"compact\"", "--json"])
             panel.setSetting("hideStopped", true)
             compare(lastExec()[5], "true")
         }
@@ -386,7 +386,7 @@ Item {
 
             sshPanel.apply()
             compare(writesSince(n).length, 1)
-            compare(writesSince(n)[0], ["omarchy", "bar", "set", "videinfra.omaprox", "sshUsers", "{\"pihole\":\"admin\",\"web\":\"bob\"}", "--json"])
+            compare(writesSince(n)[0], ["omarchy", "bar", "set", "videinfra.omahomelab", "sshUsers", "{\"pihole\":\"admin\",\"web\":\"bob\"}", "--json"])
             compare(sshPanel.pending, 0)
             compare(sshPanel.sshUserOf(web), "bob", "the applied value shows until the shell reloads")
 
@@ -440,7 +440,7 @@ Item {
             compare(written.length, 3)
             compare(written.map(function(c) { return c[4] }).sort(), ["host", "port", "sshUser"])
             for (var i = 0; i < written.length; i++) {
-                compare(written[i].slice(0, 4), ["omarchy", "bar", "set", "videinfra.omaprox"])
+                compare(written[i].slice(0, 4), ["omarchy", "bar", "set", "videinfra.omahomelab"])
                 compare(written[i][6], "--json")
             }
             compare(written.filter(function(c) { return c[4] === "port" })[0][5], "8007")

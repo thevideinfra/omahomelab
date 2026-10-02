@@ -57,7 +57,7 @@ case "$OP" in
     ;;
 
   snapshot)
-    snap="omaprox-$(date +%Y%m%d-%H%M%S)"
+    snap="omahomelab-$(date +%Y%m%d-%H%M%S)"
     if api POST "$base/snapshot" -d "snapname=$snap" --data-urlencode "description=Created from the Omarchy bar"; then
       result true "Snapshot $snap requested for $TYPE $VMID"
     else
@@ -80,7 +80,7 @@ case "$OP" in
     fi
     # The connection file carries a one-time ticket, so keep it private.
     # Proxmox sets delete-this-file=1, so remote-viewer removes it after reading.
-    vv="$(umask 077 && mktemp "${XDG_RUNTIME_DIR:-/tmp}/omaprox-XXXXXX.vv")"
+    vv="$(umask 077 && mktemp "${XDG_RUNTIME_DIR:-/tmp}/omahomelab-XXXXXX.vv")"
     {
       printf '[virt-viewer]\n'
       printf '%s' "$API_BODY" | jq -r '.data | to_entries[] | "\(.key)=\(.value)"'
