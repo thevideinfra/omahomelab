@@ -76,6 +76,8 @@ Bar: left click opens the panel, right click refreshes, middle click opens the P
 | Skip TLS verification | off | Escape hatch for lab setups. Not recommended. |
 | Only show guests matching | *(blank)* | Substring of name, id, node or tag. |
 | Hide stopped guests / Show templates | off / off | |
+| Accent colour | theme | The colour the panel highlights with: the theme's own accent, or blue, cyan, green, magenta, yellow, red or orange from the current theme's palette (only the ones it defines). Pick it in Settings; the choice follows a theme change. |
+| Show the version and GitHub link | on | The version pill and GitHub icon in the panel header. |
 | Show the storage section | on | |
 | Collapse the nodes section | off | Click the NODES label (its chevron) to fold the node cards away; the online count stays on the label. |
 | Show running/total in bar | on | |

@@ -34,7 +34,9 @@
       "consoleMode": "browser",
       "sshUser": "root",
       "sshDomain": "",
-      "nodesCollapsed": false
+      "nodesCollapsed": false,
+      "showVersion": true,
+      "accent": "theme"
     },
     "schema": [
       {
@@ -60,6 +62,23 @@
         ],
         "defaultValue": "normal",
         "description": "Text size, on top of the density's own scaling."
+      },
+      {
+        "key": "accent",
+        "type": "enum",
+        "label": "Accent colour",
+        "options": [
+          "theme",
+          "blue",
+          "cyan",
+          "green",
+          "magenta",
+          "yellow",
+          "red",
+          "orange"
+        ],
+        "defaultValue": "theme",
+        "description": "The colour the panel highlights with: the theme's accent, or a colour from its palette."
       },
       {
         "key": "host",
@@ -114,6 +133,12 @@
         "type": "boolean",
         "label": "Show templates",
         "defaultValue": false
+      },
+      {
+        "key": "showVersion",
+        "type": "boolean",
+        "label": "Show the version and GitHub link in the header",
+        "defaultValue": true
       },
       {
         "key": "nodesCollapsed",

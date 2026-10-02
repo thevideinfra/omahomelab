@@ -288,4 +288,34 @@ test("setSshUser returns the updated override map, or refuses", () => {
     assert.strictEqual(M.setSshUser(base, "", "bob").ok, false, "needs a guest name")
 })
 
+test("accent palette: parsed from colors.toml, listed, and looked up by name", () => {
+    const toml = [
+        '# a theme',
+        'accent = "#6a9fb5"',
+        'blue = "#3366ff"',
+        'green="#22aa44"',
+        'cyan = "not a colour"',
+        '  red = "#CC2222"',
+        'orange = "#ff8800" # trailing'
+    ].join("\n")
+    const palette = M.parsePalette(toml)
+    assert.strictEqual(palette.blue, "#3366ff")
+    assert.strictEqual(palette.green, "#22aa44")
+    assert.strictEqual(palette.red, "#CC2222")
+    assert.strictEqual(palette.cyan, undefined, "only #rrggbb values count")
+    assert.deepStrictEqual(M.parsePalette(""), {})
+    assert.deepStrictEqual(M.parsePalette(undefined), {})
+
+    // theme first, then the accent colours the palette has, in a fixed order
+    assert.deepStrictEqual(M.accentChoices(palette), ["theme", "blue", "green", "red", "orange"])
+    assert.deepStrictEqual(M.accentChoices({}), ["theme"])
+    assert.deepStrictEqual(M.accentChoices(undefined), ["theme"])
+
+    assert.strictEqual(M.accentColor("blue", palette), "#3366ff")
+    assert.strictEqual(M.accentColor("theme", palette), null)
+    assert.strictEqual(M.accentColor("magenta", palette), null, "a colour this theme lacks falls back")
+    assert.strictEqual(M.accentColor("", palette), null)
+    assert.strictEqual(M.accentColor("blue", undefined), null)
+})
+
 console.log(process.exitCode ? "model tests FAILED" : "model tests passed (" + passed + ")")

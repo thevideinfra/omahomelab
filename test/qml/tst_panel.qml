@@ -7,8 +7,10 @@ Item {
     width: 500; height: 700
     P.Panel { id: panel; settings: ({ host: "pve.lan", showCountInBar: true }) }
     P.Panel { id: sshPanel; settings: ({ host: "pve.lan", consoleMode: "terminal", sshUser: "ks", sshDomain: "lan", sshUsers: ({ pihole: "admin" }) }) }
-    P.Panel { id: quietPanel; settings: ({ host: "pve.lan", showCountInBar: false }) }
+    P.Panel { id: quietPanel; settings: ({ host: "pve.lan", showCountInBar: false, showVersion: false }) }
     P.Panel { id: collapsedPanel; settings: ({ host: "pve.lan", nodesCollapsed: true }) }
+    P.Panel { id: bluePanel; settings: ({ host: "pve.lan", accent: "blue" }) }
+    P.Panel { id: pinkPanel; settings: ({ host: "pve.lan", accent: "pink" }) }
     P.Panel { id: compactPanel; settings: ({ host: "pve.lan", density: "compact", fontSize: "large", showStorage: false }) }
 
     TestCase {
@@ -143,6 +145,21 @@ Item {
             compare(compactPanel.densityScale, 0.61)
             verify(compactPanel.fontBody > 0)
             verify(compactPanel.fontBody !== panel.fontBody, "font size and density change the body font")
+
+            // accent: the theme's by default, or a colour from the theme's palette, by name
+            compare(panel.accentChoice, "theme")
+            compare(String(panel.accent), "#55aaff")
+            compare(bluePanel.accentChoice, "blue")
+            compare(String(bluePanel.accent), "#3366ff")
+            compare(String(pinkPanel.accent), "#55aaff", "a colour this theme lacks falls back to the theme's accent")
+            compare(panel.accentChoices, ["theme", "blue", "green", "red"])
+            Quickshell.execs = []
+            panel.pickAccent("green")
+            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omahomelab", "accent", "\"green\"", "--json"])
+
+            // the version pill and GitHub link in the header can be hidden
+            compare(panel.showVersion, true)
+            compare(quietPanel.showVersion, false)
 
             // the bar pill is a glyph plus the running/total count, or the glyph alone
             compare(panel.barText, "󰒋 3/4")

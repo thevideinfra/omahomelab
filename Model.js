@@ -347,6 +347,38 @@ function setSshUser(overrides, guestName, user) {
     return { ok: true, map: ordered }
 }
 
+// ----------------------------------------------------------------- accent
+
+// The theme palette colours that can stand in for the theme's own accent, in
+// the order the picker shows them.
+var ACCENT_NAMES = ["blue", "cyan", "green", "magenta", "yellow", "red", "orange"]
+
+// name -> "#rrggbb" for every quoted hex colour in a theme's colors.toml.
+function parsePalette(text) {
+    var palette = {}
+    var lines = String(text || "").split("\n")
+    for (var i = 0; i < lines.length; i++) {
+        var m = lines[i].match(/^\s*([a-z_]+)\s*=\s*"(#[0-9a-fA-F]{6})"/)
+        if (m) palette[m[1]] = m[2]
+    }
+    return palette
+}
+
+// "theme" followed by whichever accent colours the palette has.
+function accentChoices(palette) {
+    var list = ["theme"]
+    for (var i = 0; i < ACCENT_NAMES.length; i++)
+        if (palette && palette[ACCENT_NAMES[i]] !== undefined) list.push(ACCENT_NAMES[i])
+    return list
+}
+
+// The palette colour for a choice, or null when the theme's own accent applies
+// ("theme", or a colour this theme does not define).
+function accentColor(choice, palette) {
+    if (choice && choice !== "theme" && palette && palette[choice] !== undefined) return palette[choice]
+    return null
+}
+
 // -------------------------------------------------------------- key help
 
 var ACTION_NOTES = {
@@ -451,7 +483,7 @@ if (typeof module !== "undefined" && module.exports) {
         consoleMode: consoleMode, sshTarget: sshTarget,
         validSshUser: validSshUser, validDomain: validDomain, validHost: validHost, validPort: validPort,
         sshUserFor: sshUserFor, setSshUser: setSshUser,
-        keyHelp: keyHelp, manifestVersion: manifestVersion,
+        keyHelp: keyHelp, parsePalette: parsePalette, accentChoices: accentChoices, accentColor: accentColor, manifestVersion: manifestVersion,
         consoleAction: consoleAction,
         guestGlyph: guestGlyph, guestLabel: guestLabel,
         densityScale: densityScale, fontSizeScale: fontSizeScale, settingBool: settingBool,

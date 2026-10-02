@@ -16,7 +16,7 @@ python3 test/mock_pve.py --port 18091 & MP=$!
 sleep 1
 OMAHOMELAB_SCHEME=http OMAHOMELAB_TOKEN='root@pam!omarchy=11111111-2222-3333-4444-555555555555' \
   bash status.sh --host 127.0.0.1 --port 18091 >"$W/out.json"
-cp -r test/qml/qs test/qml/Quickshell test/qml/tst_panel.qml "$W/"
+cp -r test/qml/qs test/qml/Quickshell test/qml/theme test/qml/tst_panel.qml "$W/"
 ln -s "$ROOT" "$W/plugin"
 cd "$W" && QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$W" \
   "$RUNNER" -input tst_panel.qml -import "$W" 2>&1 | grep -vE '^QStandardPaths|Unable to assign \[undefined\] to QColor'
