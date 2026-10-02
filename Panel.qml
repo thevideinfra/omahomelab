@@ -35,12 +35,18 @@ Panel {
 
     readonly property var keyRows: Model.keyHelp()
     readonly property string consoleMode: svc.consoleMode
+    // The NODES section folded to its label.
+    readonly property bool nodesCollapsed: Model.settingBool(setting("nodesCollapsed", false), false)
     readonly property bool showStorage: Model.settingBool(setting("showStorage", true), true)
 
     // About tandem's size: never narrower than the status line needs, and the
     // page area stops growing at pagesMaxHeight; longer pages scroll.
     readonly property real panelWidth: Math.max(sp(330), Style.space(220))
     readonly property real pagesMaxHeight: sp(500)
+
+    // The panel's own padding. The kit's default of 14 on every side leaves a wide
+    // empty border, so this takes about half of it, shrinking with the density.
+    readonly property real panelPadding: Math.max(4, Math.round(Style.spacing.popupPadding * densityScale * 0.8))
 
     property string version: ""
     readonly property string repoUrl: "https://github.com/thevideinfra/omaprox"
@@ -67,10 +73,9 @@ Panel {
     property Item editorItem: null
     readonly property bool editing: editorItem !== null
 
-    // A thin position cue for pages longer than the panel; it shows when a page
-    // appears or scrolls, then fades.
-    property bool scrollCueOn: false
-    readonly property bool scrollCueVisible: pageOverflows && scrollCueOn
+    // More to read below the visible part of the page, for the hint above the tabs.
+    readonly property bool moreBelow: pageOverflows
+        && panelFlick.contentY < panelFlick.contentHeight - panelFlick.height - 2
 
     property string page: "guests"
     readonly property var pages: [
@@ -152,6 +157,10 @@ Panel {
         Quickshell.execDetached(["omarchy", "bar", "set", "videinfra.omaprox", key, JSON.stringify(value), "--json"])
     }
 
+    function toggleNodes() {
+        setSetting("nodesCollapsed", !nodesCollapsed)
+    }
+
     function openRepo() {
         Quickshell.execDetached(["omarchy-launch-browser", repoUrl])
     }
@@ -173,9 +182,10 @@ Panel {
         else if (editorItem === item) editorItem = null
     }
 
-    function showScrollCue() {
-        scrollCueOn = true
-        scrollCueTimer.restart()
+    // Scroll down most of a page, never past the end (the hint above the tabs).
+    function scrollMore() {
+        var end = Math.max(0, panelFlick.contentHeight - panelFlick.height)
+        panelFlick.contentY = Math.min(end, panelFlick.contentY + panelFlick.height * 0.8)
     }
 
     // What a setting shows: the pending edit, else what was just applied, else what is saved.
@@ -376,12 +386,8 @@ Panel {
 
     onGuestRowsChanged: syncCursor()
 
-    // Every tab starts at the top, and shows the scroll cue if it is long.
-    onPageChanged: {
-        panelFlick.contentY = 0
-        showScrollCue()
-    }
-    onPageOverflowsChanged: if (pageOverflows) showScrollCue()
+    // Every tab starts at the top.
+    onPageChanged: panelFlick.contentY = 0
 
     // ---- actions ----------------------------------------------------------
     function runOp(op) {
@@ -452,7 +458,6 @@ Panel {
         syncCursor()
         if (panelFlick) panelFlick.contentY = 0
         svc.refresh()
-        showScrollCue()
         Qt.callLater(function() { keyCatcher.forceActiveFocus() })
     }
 
@@ -492,13 +497,6 @@ Panel {
             root.applyQueue = root.applyQueue.slice(1)
             root.applyNext()
         }
-    }
-
-    Timer {
-        id: scrollCueTimer
-        interval: 1200
-        repeat: false
-        onTriggered: root.scrollCueOn = false
     }
 
     Timer {
@@ -548,6 +546,7 @@ Panel {
         bar: root.bar
         open: root.opened
         focusTarget: keyCatcher
+        padding: root.panelPadding
         contentWidth: panel.fittedContentWidth(root.panelWidth)
         contentHeight: panel.fittedContentHeight(
             headerBlock.implicitHeight + pagesHeight + tabBlock.implicitHeight + 2 * root.sp(10), root.sp(640))
@@ -570,6 +569,7 @@ Panel {
             // ---------- Header: icon · title, version, link / status · close ----------
             Column {
                 id: headerBlock
+                objectName: "headerBlock"
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
@@ -742,16 +742,14 @@ Panel {
             // ---------- Pages ----------
             Flickable {
                 id: panelFlick
+                objectName: "pageFlick"
                 anchors.left: parent.left
-                // A gutter for the scroll cue, so it never sits over a card.
                 anchors.right: parent.right
-                anchors.rightMargin: root.sp(7)
                 anchors.top: headerBlock.bottom
                 anchors.topMargin: root.sp(10)
                 anchors.bottom: tabBlock.top
                 anchors.bottomMargin: root.sp(10)
                 contentWidth: width
-                onContentYChanged: root.showScrollCue()
                 contentHeight: pageStack.height
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
@@ -770,19 +768,46 @@ Panel {
                 }
             }
 
-            // Where you are in a long page; only while it appears or moves.
+            // More below: a small chevron at the foot of the page while there is content
+            // out of view, above the tabs. Click it to scroll down.
             Rectangle {
-                readonly property real travel: panelFlick.height - height
-                readonly property real range: Math.max(1, panelFlick.contentHeight - panelFlick.height)
-                width: Math.max(2, root.sp(3))
-                height: Math.max(root.sp(24), panelFlick.height * panelFlick.height / Math.max(1, panelFlick.contentHeight))
-                radius: width / 2
-                x: parent.width - width - root.sp(1)
-                y: panelFlick.y + travel * Math.max(0, Math.min(1, panelFlick.contentY / range))
-                color: Color.accent
-                opacity: root.scrollCueVisible ? 0.55 : 0
+                id: moreHint
+                anchors.horizontalCenter: panelFlick.horizontalCenter
+                anchors.bottom: panelFlick.bottom
+                anchors.bottomMargin: root.sp(2)
+                width: root.sp(34)
+                height: root.sp(16)
+                radius: height / 2
+                color: Util.alpha(Color.popups.background, 0.92)
+                border.width: 1
+                border.color: moreMouse.containsMouse ? Color.accent : root.tint(0.28)
+                opacity: root.moreBelow ? 1.0 : 0
                 visible: opacity > 0
-                Behavior on opacity { NumberAnimation { duration: 220 } }
+                Behavior on opacity { NumberAnimation { duration: 160 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    textFormat: Text.PlainText
+                    text: "\uf078"
+                    color: moreMouse.containsMouse ? Color.accent : root.barForeground
+                    opacity: moreMouse.containsMouse ? 1.0 : 0.7
+                    font.family: Style.font.family
+                    font.pixelSize: root.fontCaption
+                }
+
+                MouseArea {
+                    id: moreMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.scrollMore()
+                }
+
+                PanelToolTip {
+                    visible: moreMouse.containsMouse
+                    text: "More below"
+                    fontFamily: Style.font.family
+                }
             }
 
             // ---------- Errors, then the tabs ----------
@@ -1011,10 +1036,10 @@ Panel {
             width: parent.width
             spacing: root.sp(8)
 
-            SectionLabel { icon: ""; text: "NODES"; tag: root.nodesTag }
+            SectionLabel { icon: ""; text: "NODES"; tag: root.nodesTag; collapsible: true; collapsed: root.nodesCollapsed; onToggled: root.toggleNodes() }
 
             Repeater {
-                model: svc.nodes
+                model: root.nodesCollapsed ? [] : svc.nodes
 
                 NodeCard {
                     required property var modelData
@@ -1664,9 +1689,36 @@ Panel {
         property string icon: ""
         property string text: ""
         property string tag: ""
+        // A collapsible label shows a chevron after its title and toggles on a click.
+        property bool collapsible: false
+        property bool collapsed: false
+        signal toggled()
 
         width: parent ? parent.width : implicitWidth
         implicitHeight: Math.max(sectionTitle.implicitHeight, sectionIcon.implicitHeight)
+
+        MouseArea {
+            id: sectionMouse
+            anchors.fill: parent
+            anchors.margins: -root.sp(2)
+            enabled: section.collapsible
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: section.toggled()
+        }
+
+        Text {
+            visible: section.collapsible
+            anchors.left: sectionTitle.right
+            anchors.leftMargin: root.sp(7)
+            anchors.verticalCenter: parent.verticalCenter
+            textFormat: Text.PlainText
+            text: section.collapsed ? "\uf054" : "\uf078"
+            color: sectionMouse.containsMouse ? Color.accent : root.barForeground
+            opacity: sectionMouse.containsMouse ? 1.0 : 0.5
+            font.family: Style.font.family
+            font.pixelSize: root.fontCaption
+        }
 
         Text {
             id: sectionIcon

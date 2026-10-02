@@ -8,6 +8,7 @@ Item {
     P.Panel { id: panel; settings: ({ host: "pve.lan", showCountInBar: true }) }
     P.Panel { id: sshPanel; settings: ({ host: "pve.lan", consoleMode: "terminal", sshUser: "ks", sshDomain: "lan", sshUsers: ({ pihole: "admin" }) }) }
     P.Panel { id: quietPanel; settings: ({ host: "pve.lan", showCountInBar: false }) }
+    P.Panel { id: collapsedPanel; settings: ({ host: "pve.lan", nodesCollapsed: true }) }
     P.Panel { id: compactPanel; settings: ({ host: "pve.lan", density: "compact", fontSize: "large", showStorage: false }) }
 
     TestCase {
@@ -153,13 +154,31 @@ Item {
             verify(compactPanel.panelWidth <= panel.panelWidth)
             verify(compactPanel.pagesMaxHeight < panel.pagesMaxHeight)
 
+            // the panel's own padding is well under the kit's default of 14, and follows density
+            verify(panel.panelPadding <= 9, "padding " + panel.panelPadding)
+            verify(panel.panelPadding >= 4, "padding " + panel.panelPadding)
+            verify(compactPanel.panelPadding <= panel.panelPadding)
+
+            // the pages use the full width, so the left and right margins match
+            compare(findChild(panel, "pageFlick").width, findChild(panel, "headerBlock").width)
+            compare(findChild(panel, "pageFlick").x, findChild(panel, "headerBlock").x)
+
+            // the NODES section can be collapsed; the choice is kept in the settings
+            compare(panel.nodesCollapsed, false)
+            compare(collapsedPanel.nodesCollapsed, true)
+            Quickshell.execs = []
+            panel.toggleNodes()
+            compare(lastExec(), ["omarchy", "bar", "set", "videinfra.omaprox", "nodesCollapsed", "true", "--json"])
+            collapsedPanel.toggleNodes()
+            compare(lastExec()[5], "false")
+
             // storage section is on unless switched off
             compare(panel.showStorage, true)
             compare(compactPanel.showStorage, false)
 
             // header: the name, the host under it (a link), and the counts live on the section labels
             compare(panel.title, "omaprox")
-            compare(panel.statusLine, "pve.lan")
+            tryCompare(panel, "statusLine", "pve.lan", 6000)   // an earlier test's action message may still be showing
             compare(panel.statusIsLink, true)
             compare(panel.guestsTag, "3/4 RUNNING")
             verify(/^[0-9]+\/[0-9]+ ONLINE$/.test(panel.nodesTag), "nodes tag: " + panel.nodesTag)
@@ -260,6 +279,7 @@ Item {
 
         function test_pages() {
             wait(300)
+            panel.showPage("guests")   // earlier tests may have left another tab showing
             compare(panel.pages.map(function(p) { return p.id }), ["guests", "keys", "settings"])
             compare(panel.page, "guests")
 
@@ -615,18 +635,31 @@ Item {
             sshPanel.revert()
         }
 
-        function test_scroll_cue() {
+        function test_more_below_hint() {
             wait(300)
             panel.close()
             panel.open()
             wait(100)
-            // a page that overflows shows the cue when it appears, then it fades
+            // a page taller than the panel hints that there is more below, until the bottom
             verify(panel.pageOverflows)
+            compare(panel.pageScroll, 0)
+            compare(panel.moreBelow, true)
+            // clicking the hint scrolls down a page at a time and never past the end
+            var last = -1
+            for (var i = 0; i < 20 && panel.moreBelow; i++) {
+                panel.scrollMore()
+                verify(panel.pageScroll > last, "it moves down")
+                last = panel.pageScroll
+            }
+            compare(panel.moreBelow, false)
+            compare(panel.pageOverflows, true)
+            panel.scrollMore()
+            compare(panel.pageScroll, last, "nothing past the bottom")
+            // another tab starts at the top, with its own hint
             panel.showPage("keys")
-            wait(50)
-            compare(panel.scrollCueVisible, true)
-            wait(1500)
-            compare(panel.scrollCueVisible, false)
+            compare(panel.pageScroll, 0)
+            compare(panel.moreBelow, panel.pageOverflows)
+            panel.showPage("guests")
         }
     }
 }

@@ -33,7 +33,8 @@
       "showStorage": true,
       "consoleMode": "browser",
       "sshUser": "root",
-      "sshDomain": ""
+      "sshDomain": "",
+      "nodesCollapsed": false
     },
     "schema": [
       {
@@ -112,6 +113,12 @@
         "key": "showTemplates",
         "type": "boolean",
         "label": "Show templates",
+        "defaultValue": false
+      },
+      {
+        "key": "nodesCollapsed",
+        "type": "boolean",
+        "label": "Collapse the nodes section",
         "defaultValue": false
       },
       {

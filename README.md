@@ -68,6 +68,7 @@ Bar: left click opens the panel, right click refreshes, middle click opens the P
 | Only show guests matching | *(blank)* | Substring of name, id, node or tag. |
 | Hide stopped guests / Show templates | off / off | |
 | Show the storage section | on | |
+| Collapse the nodes section | off | Click the NODES label (its chevron) to fold the node cards away; the online count stays on the label. |
 | Show running/total in bar | on | |
 | Console opens in | browser | `browser` (noVNC), `spice` (`remote-viewer`) or `terminal` (ssh). Pick it in the Settings tab. The old `preferSpice: true` still means `spice`. |
 | SSH user / SSH domain | root / *(blank)* | Terminal mode runs `ssh user@name.domain` in your terminal. The guest's name is the address, so it must resolve and accept your key; set the domain if it needs one (`lan`). Both are text boxes in the Settings tab (under Console). |
